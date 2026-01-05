@@ -24,20 +24,28 @@ vim.o.signcolumn = "yes"
 vim.o.completeopt = "menu,menuone,noselect"
 vim.o.confirm = true
 
--- Persistent undo/backup/swap (portable paths)
+-- Persistent undo/backup/swap (portable, correct locations)
 local function ensure_dir(p)
-  if vim.fn.isdirectory(p) == 0 then vim.fn.mkdir(p, "p") end
+  if vim.fn.isdirectory(p) == 0 then
+    vim.fn.mkdir(p, "p")
+  end
 end
 
 local state = vim.fn.stdpath("state")
 local undo = state .. "/undo"
 local backup = state .. "/backup"
 local swap = state .. "/swap"
-ensure_dir(undo); ensure_dir(backup); ensure_dir(swap)
+
+ensure_dir(undo)
+ensure_dir(backup)
+ensure_dir(swap)
 
 vim.o.undofile = true
 vim.o.undodir = undo
+
 vim.o.backup = true
 vim.o.backupdir = backup .. "//"
 vim.o.writebackup = true
+
 vim.o.directory = swap .. "//"
+
