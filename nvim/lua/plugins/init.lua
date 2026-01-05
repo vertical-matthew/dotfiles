@@ -29,9 +29,16 @@ end
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
 
-  -- Text objects: provides `ae` / `ie` for entire buffer (use `vae` to select full file)
-  { "kana/vim-textobj-user" },
-  { "kana/vim-textobj-entire" },
+  -- =========================
+  -- Text objects: `ae` / `ie`
+  -- IMPORTANT: entire depends on user.
+  -- =========================
+  { "kana/vim-textobj-user", lazy = false },
+  {
+    "kana/vim-textobj-entire",
+    lazy = false,
+    dependencies = { "kana/vim-textobj-user" },
+  },
 
   -- File browser
   {
@@ -128,7 +135,6 @@ require("lazy").setup({
       })
 
       local caps = require("cmp_nvim_lsp").default_capabilities()
-
       vim.lsp.config("pyright", { capabilities = caps })
       vim.lsp.enable("pyright")
 
@@ -138,8 +144,7 @@ require("lazy").setup({
         callback = function(args)
           local opts = { buffer = args.buf, silent = true }
 
-          -- IMPORTANT: K is used for paragraph jump in your keymaps,
-          -- so put hover on gK instead.
+          -- K is paragraph-jump in your keymaps now; use gK for hover
           vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts)
 
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
