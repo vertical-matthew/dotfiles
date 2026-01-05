@@ -29,6 +29,10 @@ end
 require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
 
+  -- Text objects: provides `ae` / `ie` for entire buffer (use `vae` to select full file)
+  { "kana/vim-textobj-user" },
+  { "kana/vim-textobj-entire" },
+
   -- File browser
   {
     "stevearc/oil.nvim",
@@ -82,7 +86,7 @@ require("lazy").setup({
   -- Git gutter
   { "lewis6991/gitsigns.nvim", opts = {} },
 
-  -- ✅ Treesitter: commands exist immediately; calling them loads the plugin
+  -- Treesitter (loads when you run TS* commands)
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
@@ -133,7 +137,11 @@ require("lazy").setup({
         group = grp,
         callback = function(args)
           local opts = { buffer = args.buf, silent = true }
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+
+          -- IMPORTANT: K is used for paragraph jump in your keymaps,
+          -- so put hover on gK instead.
+          vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts)
+
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
           vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
           vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
