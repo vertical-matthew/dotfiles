@@ -2,7 +2,7 @@
 local fn = vim.fn
 local uv = vim.uv or vim.loop
 
--- Prevent double-setup (this is what triggers the "re-sourcing not supported" message)
+-- Prevent double-setup (this is the #1 cause of the lazy "re-sourcing" message)
 if vim.g.__dotfiles_lazy_setup_done then
   return
 end
@@ -22,7 +22,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup(require("plugins"), {
-  rocks = { enabled = false }, -- remove hererocks/luarocks noise
+  rocks = { enabled = false }, -- kills hererocks/luarocks noise
   change_detection = { enabled = false, notify = false },
   checker = { enabled = false },
 })

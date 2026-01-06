@@ -1,9 +1,9 @@
 ﻿-- lua/plugins/init.lua
 return {
-  -- Icons: make non-optional (fixes barbar warning)
+  -- Icons (non-optional; barbar needs it)
   { "nvim-tree/nvim-web-devicons", lazy = false, priority = 1000 },
 
-  -- which-key (v3 spec)
+  -- which-key (v3 format)
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -13,61 +13,38 @@ return {
         { "<leader>o", group = "+oil" },
         { "<leader>l", group = "+lsp" },
         { "<leader>t", group = "+tools" },
-        { "<leader>r", group = "+refactor" },
-        { "<leader>m", group = "+move" },
 
         { "<leader>5", desc = "Oil" },
         { "<leader>6", desc = "UndoTree" },
-        { "<leader>8", desc = "Symbols" },
 
         { "<leader>ff", desc = "Find files" },
         { "<leader>fg", desc = "Live grep" },
         { "<leader>fb", desc = "Buffers" },
         { "<leader>fh", desc = "Help tags" },
         { "<leader>fl", desc = "Fuzzy (buffer)" },
-        { "<leader>//", desc = "Fuzzy (buffer)" },
-
-        { "<leader>rn", desc = "Rename symbol" },
-        { "<leader>dict", desc = "Dictionary" },
-        { "<leader>thes", desc = "Thesaurus" },
+        { "?", desc = "Live grep" },
       },
     },
   },
 
   { "nvim-lua/plenary.nvim" },
 
-  -- Textobj framework + requested objects
+  -- Text objects (your requested set)
   { "kana/vim-textobj-user", lazy = false },
   { "kana/vim-textobj-entire", lazy = false, dependencies = { "kana/vim-textobj-user" } },
   { "kana/vim-textobj-line", lazy = false, dependencies = { "kana/vim-textobj-user" } },
   { "michaeljsmith/vim-indent-object", lazy = false },
   { "bps/vim-textobj-python", ft = { "python" }, dependencies = { "kana/vim-textobj-user" } },
 
-  -- Smarter f/F/t/T
-  {
-    "rhysd/clever-f.vim",
-    lazy = false,
-    init = function()
-      vim.g.clever_f_fix_key_direction = 1
-      vim.g.clever_f_mark_char = 1
-    end,
-  },
+  -- clever-f
+  { "rhysd/clever-f.vim", event = "VeryLazy" },
 
-  -- Move lines/blocks (explicit Alt+hjkl, no Ctrl-j/Ctrl-k collision)
+  -- vim-move (no default keymaps; keep it but don’t collide with Ctrl-j/k)
   {
     "matze/vim-move",
-    lazy = false,
+    event = "VeryLazy",
     init = function()
       vim.g.move_map_keys = 0
-      vim.api.nvim_set_keymap("n", "<A-j>", "<Plug>MoveLineDown", {})
-      vim.api.nvim_set_keymap("n", "<A-k>", "<Plug>MoveLineUp", {})
-      vim.api.nvim_set_keymap("n", "<A-h>", "<Plug>MoveLineLeft", {})
-      vim.api.nvim_set_keymap("n", "<A-l>", "<Plug>MoveLineRight", {})
-
-      vim.api.nvim_set_keymap("v", "<A-j>", "<Plug>MoveBlockDown", {})
-      vim.api.nvim_set_keymap("v", "<A-k>", "<Plug>MoveBlockUp", {})
-      vim.api.nvim_set_keymap("v", "<A-h>", "<Plug>MoveBlockLeft", {})
-      vim.api.nvim_set_keymap("v", "<A-l>", "<Plug>MoveBlockRight", {})
     end,
   },
 
@@ -77,16 +54,15 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
       require("oil").setup()
-      vim.keymap.set("n", "-", "<CMD>Oil<CR>", { silent = true })
-      vim.keymap.set("n", "<F5>", "<CMD>Oil<CR>", { silent = true })
-      vim.keymap.set("n", "<leader>5", "<CMD>Oil<CR>", { silent = true })
+      vim.keymap.set("n", "-", "<cmd>Oil<cr>", { silent = true })
+      vim.keymap.set("n", "<F5>", "<cmd>Oil<cr>", { silent = true })
+      vim.keymap.set("n", "<leader>5", "<cmd>Oil<cr>", { silent = true })
     end,
   },
 
   -- Telescope
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       require("telescope").setup({})
       vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { silent = true })
@@ -94,7 +70,6 @@ return {
       vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { silent = true })
       vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { silent = true })
       vim.keymap.set("n", "<leader>fl", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent = true })
-      vim.keymap.set("n", "<leader>//", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent = true })
       vim.keymap.set("n", "?", "<cmd>Telescope live_grep<cr>", { silent = true })
     end,
   },
@@ -108,29 +83,26 @@ return {
     end,
   },
 
-  -- Barbar (depends on devicons)
+  -- Barbar (tabs)
   {
     "romgrk/barbar.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     init = function()
       vim.g.barbar_auto_setup = false
     end,
-    opts = {
-      icons = { filetype = { enabled = true } },
-    },
     config = function()
       vim.keymap.set("n", "<Left>", ":BufferPrevious<CR>", { silent = true })
       vim.keymap.set("n", "<Right>", ":BufferNext<CR>", { silent = true })
     end,
   },
 
+  -- Git signs
   { "lewis6991/gitsigns.nvim", opts = {} },
 
-  -- Treesitter: DO NOT load during headless sync; only on edit or TS commands
+  -- Treesitter: safe config (no crash if module missing)
   {
     "nvim-treesitter/nvim-treesitter",
     event = { "BufReadPost", "BufNewFile" },
-    cmd = { "TSUpdate", "TSInstall", "TSUninstall", "TSModuleInfo", "TSBufEnable", "TSBufDisable" },
     build = ":TSUpdate",
     config = function()
       local ok, configs = pcall(require, "nvim-treesitter.configs")
@@ -144,7 +116,7 @@ return {
     end,
   },
 
-  -- LSP + completion (Neovim 0.11+)
+  -- LSP + completion (Neovim 0.11+ style, minimal)
   {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -172,12 +144,10 @@ return {
       vim.lsp.config("pyright", { capabilities = caps })
       vim.lsp.enable("pyright")
 
-      local grp = vim.api.nvim_create_augroup("UserLspKeymaps", { clear = true })
       vim.api.nvim_create_autocmd("LspAttach", {
-        group = grp,
         callback = function(args)
           local opts = { buffer = args.buf, silent = true }
-          vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts) -- K is paragraph jump
+          vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts)
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
           vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
           vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
@@ -185,25 +155,22 @@ return {
           vim.keymap.set("n", "]g", vim.diagnostic.goto_next, opts)
         end,
       })
-
-      vim.keymap.set("n", "<F8>", "<cmd>Telescope lsp_document_symbols<cr>", { silent = true })
-      vim.keymap.set("n", "<leader>8", "<cmd>Telescope lsp_document_symbols<cr>", { silent = true })
     end,
   },
 
-  -- Hop (keep mappings)
+  -- Hop (FIX: use maintained fork to avoid broken healthcheck)
   {
-    "phaazon/hop.nvim",
-    branch = "v2",
+    "smoka7/hop.nvim",
+    version = "*",
     config = function()
       require("hop").setup()
-      vim.keymap.set("n", "<Leader>w", ":HopWord<CR>", { silent = true })
-      vim.keymap.set("n", "<Leader>a", ":HopLine<CR>", { silent = true })
-      vim.keymap.set("n", "<Leader><Leader>/", ":HopPattern<CR>", { silent = true })
+      vim.keymap.set("n", "<leader>w", "<cmd>HopWord<cr>", { silent = true })
+      vim.keymap.set("n", "<leader>a", "<cmd>HopLine<cr>", { silent = true })
+      vim.keymap.set("n", "<leader><leader>/", "<cmd>HopPattern<cr>", { silent = true })
     end,
   },
 
-  -- Gruvbox
+  -- Gruvbox (keep)
   {
     "morhetz/gruvbox",
     config = function()
