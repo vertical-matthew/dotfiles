@@ -1,45 +1,59 @@
-﻿-- Leader is set in options.lua
-vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
+﻿-- lua/core/keymaps.lua
+local map = vim.keymap.set
+local silent = { silent = true }
 
--- Your habits
-vim.keymap.set("n", "<CR>", ":nohlsearch<CR><CR>", { silent = true })
-vim.keymap.set("i", "jk", "<Esc>", { silent = true })
-vim.keymap.set("n", "qq", ":qa<CR>", { silent = true })
-vim.keymap.set("n", "ww", ":wa<CR><CR>", { silent = true })
-vim.keymap.set("n", "<C-s>", ":update<CR>", { silent = true })
+map({ "n", "v" }, "<Space>", "<Nop>", silent)
 
--- Splits
-vim.keymap.set("n", "<Leader><Leader>h", "<C-w>v", { silent = true })
-vim.keymap.set("n", "<Leader><Leader>v", "<C-w>s", { silent = true })
+map("n", "qq", "<cmd>qa<cr>", silent)
+map("n", "<leader>qq", "<cmd>qa!<cr>", silent)
+map("n", "ww", "<cmd>wa<cr><cr>", silent)
+map("n", "<C-s>", "<cmd>update<cr>", silent)
+map("i", "jk", "<Esc>", silent)
+map("n", "q", "<cmd>q<cr>", silent)
 
--- Window nav
-vim.keymap.set("n", "<leader>h", "<C-w>h", { silent = true })
-vim.keymap.set("n", "<leader>j", "<C-w>j", { silent = true })
-vim.keymap.set("n", "<leader>k", "<C-w>k", { silent = true })
-vim.keymap.set("n", "<leader>l", "<C-w>l", { silent = true })
+map("n", "<leader><leader>h", "<C-w>v", silent)
+map("n", "<leader><leader>v", "<C-w>s", silent)
 
--- Indent and keep selection
-vim.keymap.set("v", "<", "<gv", { silent = true })
-vim.keymap.set("v", ">", ">gv", { silent = true })
+map("v", "<", "<gv", silent)
+map("v", ">", ">gv", silent)
 
--- Command mode
-vim.keymap.set({ "n", "v" }, ";", ":", { noremap = true })
+map("n", ";", ":", { noremap = true })
+map("v", ";", ":", { noremap = true })
 
--- ===== Restored "old" navigation muscle memory =====
+map("n", "<CR>", "<cmd>nohlsearch<cr><cr>", silent)
+map("n", "<leader>x", "<cmd>b#<cr>", silent)
 
--- Shift+J / Shift+K (i.e. J/K) = paragraph jumps
--- (your old mapping: J -> } and K -> {)
-vim.keymap.set("n", "J", "}", { silent = true })
-vim.keymap.set("n", "K", "{", { silent = true })
+map("n", "<leader>h", "<C-w>h", silent)
+map("n", "<leader>j", "<C-w>j", silent)
+map("n", "<leader>k", "<C-w>k", silent)
+map("n", "<leader>l", "<C-w>l", silent)
 
--- Ctrl+j / Ctrl+k = screen jumps (half page)
-vim.keymap.set("n", "<C-j>", "<C-d>", { silent = true })
-vim.keymap.set("n", "<C-k>", "<C-u>", { silent = true })
+-- Paragraph jumps
+map({ "n", "v", "o" }, "J", "}", silent)
+map({ "n", "v", "o" }, "K", "{", silent)
 
--- Jump list back/forward (you previously used H/L for this)
-vim.keymap.set("n", "H", "<C-o>", { silent = true })
-vim.keymap.set("n", "L", "<C-i>", { silent = true })
+-- FIXED jump-list direction:
+-- Ctrl+j = forward, Ctrl+k = back
+map("n", "<C-j>", "<C-d>", silent)
+map("n", "<C-k>", "<C-u>", silent)
 
--- Your file start/end arrows
-vim.keymap.set("n", "<Up>", "gg", { silent = true })
-vim.keymap.set("n", "<Down>", "G", { silent = true })
+map("n", "H", "<C-o>", silent)
+map("n", "L", "<C-i>", silent)
+
+map("n", "<C-h>", "^", silent)
+map("n", "<C-l>", "$", silent)
+
+map("n", "<Up>", "gg", silent)
+map("n", "<Down>", "G", silent)
+
+map("n", "Y", "y$", silent)
+
+map("n", "<leader><leader>c", "zM", silent)
+map("n", "<leader><leader>o", "zR", silent)
+
+map("n", "<leader>-", "<cmd>g/^$/d<cr>", silent)
+map("n", "<leader>vi", "<cmd>tabedit $MYVIMRC<cr>", silent)
+map("n", "<leader><leader>t", "<cmd>terminal<cr>", silent)
+
+map("n", "<BS>", "u", silent)
+map("n", "<S-BS>", "<C-r>", silent)

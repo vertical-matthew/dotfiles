@@ -1,94 +1,49 @@
-﻿-- REPLACE FULL FILE: %LOCALAPPDATA%\nvim\lua\plugins\init.lua
--- Fixes:
--- 1) Hop healthcheck error (uses newer health API): pin hop.nvim to a compatible tag
--- 2) Lazy "luarocks/hererocks" warnings: disable rocks entirely (you don't need it)
+﻿-- lua/plugins/init.lua
+return {
+  -- Icons: make non-optional (fixes barbar warning)
+  { "nvim-tree/nvim-web-devicons", lazy = false, priority = 1000 },
 
--- =========================
--- lazy.nvim bootstrap
--- =========================
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if vim.loop.fs_stat(lazypath) == nil then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",
-    lazypath,
-  })
-end
-vim.opt.rtp:prepend(lazypath)
-
--- Helper: open URL cross-platform
-local function open_url(url)
-  local sys = vim.loop.os_uname().sysname
-  if sys == "Windows_NT" then
-    vim.fn.jobstart({ "cmd.exe", "/C", "start", "", url }, { detach = true })
-  elseif sys == "Darwin" then
-    vim.fn.jobstart({ "open", url }, { detach = true })
-  else
-    vim.fn.jobstart({ "xdg-open", url }, { detach = true })
-  end
-end
-
-require("lazy").setup({
-  { "nvim-lua/plenary.nvim" },
-
-  -- =========================
-  -- which-key (leader popup)
-  -- =========================
+  -- which-key (v3 spec)
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
-    config = function()
-      local wk = require("which-key")
-      wk.setup({})
+    opts = {
+      spec = {
+        { "<leader>f", group = "+find" },
+        { "<leader>o", group = "+oil" },
+        { "<leader>l", group = "+lsp" },
+        { "<leader>t", group = "+tools" },
+        { "<leader>r", group = "+refactor" },
+        { "<leader>m", group = "+move" },
 
-      local function add(spec, opts)
-        if wk.add then
-          wk.add(spec, opts)
-        else
-          wk.register(spec, opts)
-        end
-      end
+        { "<leader>5", desc = "Oil" },
+        { "<leader>6", desc = "UndoTree" },
+        { "<leader>8", desc = "Symbols" },
 
-      add({
-        f = { name = "+find" },
-        o = { name = "+oil" },
-        r = { name = "+refactor" },
-        l = { name = "+lsp" },
-        t = { name = "+tools" },
+        { "<leader>ff", desc = "Find files" },
+        { "<leader>fg", desc = "Live grep" },
+        { "<leader>fb", desc = "Buffers" },
+        { "<leader>fh", desc = "Help tags" },
+        { "<leader>fl", desc = "Fuzzy (buffer)" },
+        { "<leader>//", desc = "Fuzzy (buffer)" },
 
-        ["5"] = "Oil",
-        ["6"] = "UndoTree",
-        ["8"] = "Symbols",
-
-        ff = "Find files",
-        fg = "Live grep",
-        fb = "Buffers",
-        fh = "Help tags",
-        fl = "Fuzzy (buffer)",
-
-        rn = "Rename symbol",
-
-        dict = "Dictionary",
-        thes = "Thesaurus",
-      }, { prefix = "<leader>" })
-    end,
+        { "<leader>rn", desc = "Rename symbol" },
+        { "<leader>dict", desc = "Dictionary" },
+        { "<leader>thes", desc = "Thesaurus" },
+      },
+    },
   },
 
-  -- =========================
-  -- Text objects (entire file, line, indent, python)
-  -- =========================
+  { "nvim-lua/plenary.nvim" },
+
+  -- Textobj framework + requested objects
   { "kana/vim-textobj-user", lazy = false },
   { "kana/vim-textobj-entire", lazy = false, dependencies = { "kana/vim-textobj-user" } },
   { "kana/vim-textobj-line", lazy = false, dependencies = { "kana/vim-textobj-user" } },
   { "michaeljsmith/vim-indent-object", lazy = false },
-  { "bps/vim-textobj-python", ft = { "python" } },
+  { "bps/vim-textobj-python", ft = { "python" }, dependencies = { "kana/vim-textobj-user" } },
 
-  -- =========================
-  -- Motions / movement helpers
-  -- =========================
+  -- Smarter f/F/t/T
   {
     "rhysd/clever-f.vim",
     lazy = false,
@@ -98,7 +53,7 @@ require("lazy").setup({
     end,
   },
 
-  -- vim-move with explicit Alt+hjkl (no Ctrl-j/Ctrl-k collisions)
+  -- Move lines/blocks (explicit Alt+hjkl, no Ctrl-j/Ctrl-k collision)
   {
     "matze/vim-move",
     lazy = false,
@@ -116,21 +71,19 @@ require("lazy").setup({
     end,
   },
 
-  -- =========================
-  -- Core plugins
-  -- =========================
-
+  -- Oil
   {
     "stevearc/oil.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
       require("oil").setup()
-      vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
+      vim.keymap.set("n", "-", "<CMD>Oil<CR>", { silent = true })
       vim.keymap.set("n", "<F5>", "<CMD>Oil<CR>", { silent = true })
       vim.keymap.set("n", "<leader>5", "<CMD>Oil<CR>", { silent = true })
     end,
   },
 
+  -- Telescope
   {
     "nvim-telescope/telescope.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
@@ -141,10 +94,12 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { silent = true })
       vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { silent = true })
       vim.keymap.set("n", "<leader>fl", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent = true })
+      vim.keymap.set("n", "<leader>//", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent = true })
       vim.keymap.set("n", "?", "<cmd>Telescope live_grep<cr>", { silent = true })
     end,
   },
 
+  -- UndoTree
   {
     "mbbill/undotree",
     config = function()
@@ -153,13 +108,16 @@ require("lazy").setup({
     end,
   },
 
+  -- Barbar (depends on devicons)
   {
     "romgrk/barbar.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     init = function()
       vim.g.barbar_auto_setup = false
     end,
-    opts = {},
+    opts = {
+      icons = { filetype = { enabled = true } },
+    },
     config = function()
       vim.keymap.set("n", "<Left>", ":BufferPrevious<CR>", { silent = true })
       vim.keymap.set("n", "<Right>", ":BufferNext<CR>", { silent = true })
@@ -168,10 +126,12 @@ require("lazy").setup({
 
   { "lewis6991/gitsigns.nvim", opts = {} },
 
+  -- Treesitter: DO NOT load during headless sync; only on edit or TS commands
   {
     "nvim-treesitter/nvim-treesitter",
+    event = { "BufReadPost", "BufNewFile" },
+    cmd = { "TSUpdate", "TSInstall", "TSUninstall", "TSModuleInfo", "TSBufEnable", "TSBufDisable" },
     build = ":TSUpdate",
-    cmd = { "TSUpdate", "TSInstall", "TSUninstall", "TSBufEnable", "TSBufDisable", "TSModuleInfo" },
     config = function()
       local ok, configs = pcall(require, "nvim-treesitter.configs")
       if not ok then
@@ -184,6 +144,7 @@ require("lazy").setup({
     end,
   },
 
+  -- LSP + completion (Neovim 0.11+)
   {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -216,7 +177,7 @@ require("lazy").setup({
         group = grp,
         callback = function(args)
           local opts = { buffer = args.buf, silent = true }
-          vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts)
+          vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts) -- K is paragraph jump
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
           vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
           vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
@@ -230,10 +191,10 @@ require("lazy").setup({
     end,
   },
 
-  -- Hop: pin to a stable tag that uses modern health API
+  -- Hop (keep mappings)
   {
     "phaazon/hop.nvim",
-    version = "v2.*",
+    branch = "v2",
     config = function()
       require("hop").setup()
       vim.keymap.set("n", "<Leader>w", ":HopWord<CR>", { silent = true })
@@ -242,6 +203,7 @@ require("lazy").setup({
     end,
   },
 
+  -- Gruvbox
   {
     "morhetz/gruvbox",
     config = function()
@@ -249,17 +211,4 @@ require("lazy").setup({
       vim.cmd("colorscheme gruvbox")
     end,
   },
-}, {
-  -- Disable luarocks/hererocks entirely (you don't need it; removes warnings)
-  rocks = {
-    enabled = false,
-  },
-})
-
-vim.keymap.set("n", "<leader>dict", function()
-  open_url("https://www.dictionary.com/browse/" .. vim.fn.expand("<cword>"))
-end, { silent = true })
-
-vim.keymap.set("n", "<leader>thes", function()
-  open_url("https://www.thesaurus.com/browse/" .. vim.fn.expand("<cword>"))
-end, { silent = true })
+}

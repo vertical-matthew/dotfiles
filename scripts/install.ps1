@@ -1,55 +1,75 @@
+# scripts/install.ps1
+[CmdletBinding()]
 param(
-  [string]$RepoDir = "$env:USERPROFILE\.dotfiles"
+  [Parameter(Mandatory=$true)]
+  [string]$RepoDir
 )
 
 $ErrorActionPreference = "Stop"
 
-function WingetInstall([string]$id) {
-  if (Get-Command winget -ErrorAction SilentlyContinue) {
-    & winget install --id $id -e --silent | Out-Null
-  } else {
-    throw "winget not found. Install App Installer from Microsoft Store."
+function Write-Info($msg) { Write-Host "[dotfiles] $msg" -ForegroundColor Cyan }
+function Write-Warn($msg) { Write-Warning "[dotfiles] $msg" }
+
+function Ensure-WingetPackage([string]$Id) {
+  if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Warn "winget not found. Install '$Id' manually."
+    return
+  }
+  Write-Info "Ensuring winget package: $Id"
+  winget install --id $Id -e --silent --accept-source-agreements --accept-package-agreements | Out-Host
+}
+
+function Ensure-Dir([string]$Path) {
+  if (-not (Test-Path $Path)) {
+    New-Item -ItemType Directory -Path $Path | Out-Null
   }
 }
 
-$repoNvim = Join-Path $RepoDir "nvim"
-$target = Join-Path $env:LOCALAPPDATA "nvim"
+# 1) Install external deps (fixes your ripgrep miss)
+Ensure-WingetPackage "Git.Git"
+Ensure-WingetPackage "Neovim.Neovim"
+Ensure-WingetPackage "BurntSushi.ripgrep"
+Ensure-WingetPackage "sharkdp.fd"
+Ensure-WingetPackage "zig.zig"
+Ensure-WingetPackage "OpenJS.NodeJS.LTS"
 
-# Validate repo structure
-$initLua = Join-Path $repoNvim "init.lua"
-if (-not (Test-Path $initLua -PathType Leaf)) {
-  throw "Expected Neovim config not found: $initLua`nYour repo must contain: dotfiles\nvim\init.lua"
+# 2) Python provider + formatters (optional but makes <leader>0 useful for python)
+if (Get-Command python -ErrorAction SilentlyContinue) {
+  Write-Info "Installing python deps (pynvim, black, isort)"
+  python -m pip install --user --upgrade pynvim black isort | Out-Host
+} else {
+  Write-Warn "python not found; skipping pynvim/black/isort"
 }
 
-# Dependencies
-WingetInstall "Neovim.Neovim"
-WingetInstall "Git.Git"
-WingetInstall "BurntSushi.ripgrep"
-WingetInstall "sharkdp.fd"
-WingetInstall "OpenJS.NodeJS.LTS"
-WingetInstall "Python.Python.3.12"
+# 3) Link Neovim config
+$source = Join-Path $RepoDir "nvim"
+if (-not (Test-Path $source)) {
+  throw "Missing '$source'. Repo must contain a 'nvim' folder."
+}
 
-# Providers / LSP
-& py -m pip install --user -U pynvim | Out-Null
-& npm i -g pyright | Out-Null
+$target = Join-Path $env:LOCALAPPDATA "nvim"
+Ensure-Dir $env:LOCALAPPDATA
 
-# Replace existing config (backup if it's a real folder)
 if (Test-Path $target) {
   $item = Get-Item $target -Force
   if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-    # junction/symlink
-    Remove-Item -Recurse -Force $target
+    Write-Info "Removing existing junction: $target"
+    Remove-Item $target -Force
   } else {
-    # real folder -> backup
     $bak = "$target.bak.$(Get-Date -Format yyyyMMddHHmmss)"
-    Move-Item $target $bak
+    Write-Info "Backing up existing config to: $bak"
+    Rename-Item $target $bak
   }
 }
 
-# Create junction (no admin needed)
-New-Item -ItemType Junction -Path $target -Target $repoNvim | Out-Null
+Write-Info "Creating junction: $target -> $source"
+New-Item -ItemType Junction -Path $target -Target $source | Out-Null
 
-# Plugin sync headless (no bang; works with Lazy)
-& nvim --headless "+Lazy sync" +qa
-
-Write-Host "Done. Run: nvim"
+# 4) Headless plugin install
+if (Get-Command nvim -ErrorAction SilentlyContinue) {
+  Write-Info "Running Lazy sync (headless)"
+  nvim --headless "+Lazy sync" +qa | Out-Host
+  Write-Info "Done. Start nvim normally: nvim"
+} else {
+  Write-Warn "nvim not found on PATH yet. Open a new terminal and run: nvim"
+}
