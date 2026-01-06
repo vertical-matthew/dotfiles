@@ -1,4 +1,9 @@
-﻿-- =========================
+﻿-- REPLACE FULL FILE: %LOCALAPPDATA%\nvim\lua\plugins\init.lua
+-- Fixes:
+-- 1) Hop healthcheck error (uses newer health API): pin hop.nvim to a compatible tag
+-- 2) Lazy "luarocks/hererocks" warnings: disable rocks entirely (you don't need it)
+
+-- =========================
 -- lazy.nvim bootstrap
 -- =========================
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -30,17 +35,91 @@ require("lazy").setup({
   { "nvim-lua/plenary.nvim" },
 
   -- =========================
-  -- Text objects: `ae` / `ie`
-  -- IMPORTANT: entire depends on user.
+  -- which-key (leader popup)
   -- =========================
-  { "kana/vim-textobj-user", lazy = false },
   {
-    "kana/vim-textobj-entire",
-    lazy = false,
-    dependencies = { "kana/vim-textobj-user" },
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    config = function()
+      local wk = require("which-key")
+      wk.setup({})
+
+      local function add(spec, opts)
+        if wk.add then
+          wk.add(spec, opts)
+        else
+          wk.register(spec, opts)
+        end
+      end
+
+      add({
+        f = { name = "+find" },
+        o = { name = "+oil" },
+        r = { name = "+refactor" },
+        l = { name = "+lsp" },
+        t = { name = "+tools" },
+
+        ["5"] = "Oil",
+        ["6"] = "UndoTree",
+        ["8"] = "Symbols",
+
+        ff = "Find files",
+        fg = "Live grep",
+        fb = "Buffers",
+        fh = "Help tags",
+        fl = "Fuzzy (buffer)",
+
+        rn = "Rename symbol",
+
+        dict = "Dictionary",
+        thes = "Thesaurus",
+      }, { prefix = "<leader>" })
+    end,
   },
 
-  -- File browser
+  -- =========================
+  -- Text objects (entire file, line, indent, python)
+  -- =========================
+  { "kana/vim-textobj-user", lazy = false },
+  { "kana/vim-textobj-entire", lazy = false, dependencies = { "kana/vim-textobj-user" } },
+  { "kana/vim-textobj-line", lazy = false, dependencies = { "kana/vim-textobj-user" } },
+  { "michaeljsmith/vim-indent-object", lazy = false },
+  { "bps/vim-textobj-python", ft = { "python" } },
+
+  -- =========================
+  -- Motions / movement helpers
+  -- =========================
+  {
+    "rhysd/clever-f.vim",
+    lazy = false,
+    init = function()
+      vim.g.clever_f_fix_key_direction = 1
+      vim.g.clever_f_mark_char = 1
+    end,
+  },
+
+  -- vim-move with explicit Alt+hjkl (no Ctrl-j/Ctrl-k collisions)
+  {
+    "matze/vim-move",
+    lazy = false,
+    init = function()
+      vim.g.move_map_keys = 0
+      vim.api.nvim_set_keymap("n", "<A-j>", "<Plug>MoveLineDown", {})
+      vim.api.nvim_set_keymap("n", "<A-k>", "<Plug>MoveLineUp", {})
+      vim.api.nvim_set_keymap("n", "<A-h>", "<Plug>MoveLineLeft", {})
+      vim.api.nvim_set_keymap("n", "<A-l>", "<Plug>MoveLineRight", {})
+
+      vim.api.nvim_set_keymap("v", "<A-j>", "<Plug>MoveBlockDown", {})
+      vim.api.nvim_set_keymap("v", "<A-k>", "<Plug>MoveBlockUp", {})
+      vim.api.nvim_set_keymap("v", "<A-h>", "<Plug>MoveBlockLeft", {})
+      vim.api.nvim_set_keymap("v", "<A-l>", "<Plug>MoveBlockRight", {})
+    end,
+  },
+
+  -- =========================
+  -- Core plugins
+  -- =========================
+
   {
     "stevearc/oil.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -52,7 +131,6 @@ require("lazy").setup({
     end,
   },
 
-  -- Telescope
   {
     "nvim-telescope/telescope.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
@@ -67,7 +145,6 @@ require("lazy").setup({
     end,
   },
 
-  -- UndoTree
   {
     "mbbill/undotree",
     config = function()
@@ -76,7 +153,6 @@ require("lazy").setup({
     end,
   },
 
-  -- Buffer tabs
   {
     "romgrk/barbar.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -90,10 +166,8 @@ require("lazy").setup({
     end,
   },
 
-  -- Git gutter
   { "lewis6991/gitsigns.nvim", opts = {} },
 
-  -- Treesitter (loads when you run TS* commands)
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
@@ -110,7 +184,6 @@ require("lazy").setup({
     end,
   },
 
-  -- LSP + completion (Neovim 0.11+ API; no require('lspconfig'))
   {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -143,10 +216,7 @@ require("lazy").setup({
         group = grp,
         callback = function(args)
           local opts = { buffer = args.buf, silent = true }
-
-          -- K is paragraph-jump in your keymaps now; use gK for hover
           vim.keymap.set("n", "gK", vim.lsp.buf.hover, opts)
-
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
           vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
           vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
@@ -160,10 +230,10 @@ require("lazy").setup({
     end,
   },
 
-  -- Jump fast
+  -- Hop: pin to a stable tag that uses modern health API
   {
     "phaazon/hop.nvim",
-    branch = "v2",
+    version = "v2.*",
     config = function()
       require("hop").setup()
       vim.keymap.set("n", "<Leader>w", ":HopWord<CR>", { silent = true })
@@ -172,7 +242,6 @@ require("lazy").setup({
     end,
   },
 
-  -- Theme
   {
     "morhetz/gruvbox",
     config = function()
@@ -180,9 +249,13 @@ require("lazy").setup({
       vim.cmd("colorscheme gruvbox")
     end,
   },
+}, {
+  -- Disable luarocks/hererocks entirely (you don't need it; removes warnings)
+  rocks = {
+    enabled = false,
+  },
 })
 
--- Dictionary / thesaurus
 vim.keymap.set("n", "<leader>dict", function()
   open_url("https://www.dictionary.com/browse/" .. vim.fn.expand("<cword>"))
 end, { silent = true })
