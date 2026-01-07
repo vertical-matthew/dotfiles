@@ -1,8 +1,22 @@
-﻿-- nvim/lua/core/options.lua
+﻿-- lua/core/options.lua
+
+-- ---------------------------------------------------------
+-- Compatibility shim: some plugins still call the old
+-- vim.health.report_* API. Newer Neovim uses vim.health.*
+-- This makes :checkhealth hop (and similar) stop erroring.
+-- ---------------------------------------------------------
+if vim.health and not vim.health.report_start and vim.health.start then
+  vim.health.report_start = vim.health.start
+  vim.health.report_ok    = vim.health.ok
+  vim.health.report_warn  = vim.health.warn
+  vim.health.report_error = vim.health.error
+  vim.health.report_info  = vim.health.info
+end
+
 local fn = vim.fn
 local opt = vim.opt
 
--- Persistent undo/backup/swap (cross-platform, keeps your intent)
+-- Persistent undo/backup/swap (cross-platform)
 local state = fn.stdpath("state")
 local undodir = state .. "/undo"
 local backupdir = state .. "/backup"
@@ -85,12 +99,11 @@ opt.listchars = {
   precedes = "<",
   space = "␣",
 }
--- matches your old config: define listchars but don't force list=on
 opt.list = false
 
 opt.splitright = true
 opt.splitbelow = true
 
--- Your old intent: don't auto-wrap text while typing
+-- Keep your intent: don't auto-wrap while typing
 opt.formatoptions = "tcqrn1"
 opt.formatoptions:remove("t")
